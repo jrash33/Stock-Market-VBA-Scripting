@@ -1,0 +1,150 @@
+'Name: Joey Ashcroft
+'Date: 1/23/2019
+'Description: Homework 2
+
+Sub StockMarket()
+
+'for loop to iterate through each sheet
+For num = 1 To Worksheets.Count
+
+    'activate sheet of interest
+    Worksheets(num).Activate
+
+    'initialize variables
+    Dim rowsnum As Long
+    Dim j As Long
+    Dim counter As Long
+    'this array will store the locations of the ticker string change
+    Dim Arr(10000) As Double
+    Dim MaxIncrease As Double
+    Dim MaxDecrease As Double
+    Dim MaxTotVolume As Double
+
+    'name columns/rows
+    Range("I1").Value = "Ticker"
+    Range("J1").Value = "Yearly Change"
+    Range("K1").Value = "Percent Change"
+    Range("L1").Value = "Total Stock Volume"
+    Range("O2").Value = "Greatest % Increase"
+    Range("O3").Value = "Greatest % Decrease"
+    Range("O4").Value = "Greatest Total Volume"
+    Range("P1").Value = "Ticker"
+    Range("Q1").Value = "Value"
+
+    'find number of rows in the worksheet
+    rowsnum = Range("A1", Range("A1").End(xlDown)).Rows.Count
+
+    'start row counter on row 2
+    j = 2
+    'hard code array value 1 to contain the first row of the data set
+    Arr(1) = 2
+
+    'initialize max % increase/decrease/Max Total Volume values
+    MaxIncrease = 0
+    MaxDecrease = 0
+    MaxTotVolume = 0
+
+    'for loop to fill in calculations from data set
+    For i = 3 To rowsnum + 1
+
+        'conditional statement triggered by ticker change
+        If Cells(i - 1, 1) <> Cells(i, 1) Then
+            
+            'fill array with locations of ticker change
+            Arr(j) = i
+    
+            'output each ticker
+            Cells(j, 9) = Cells(i - 1, 1)
+    
+            'yearly change
+            If Cells(Arr(j - 1), 3) <> 0 Then
+                Cells(j, 10) = Cells(i - 1, 6) - Cells(Arr(j - 1), 3)
+            Else 'if stocks don't open in january-find row they start in
+            counter = Arr(j - 1)
+            
+                Do While Cells(counter, 3) = 0
+                    'counter to find how many rows of zeros
+                    counter = counter + 1
+                Loop
+                
+                'now calculate yearly change with new row location
+                Cells(j, 10) = Cells(i - 1, 6) - Cells(counter, 3)
+                
+            End If
+    
+            'percent change
+            If Cells(Arr(j - 1), 3) <> 0 Then
+                With Cells(j, 11)
+                    .Value = Cells(j, 10) / Cells(Arr(j - 1), 3)
+                    .Style = "Percent"
+                    .NumberFormat = "0.00%"
+                End With
+            Else 'if stocks don't open in january-find row they start in
+                With Cells(j, 11)
+                    .Value = Cells(j, 10) / Cells(counter, 3)
+                    .Style = "Percent"
+                    .NumberFormat = "0.00%"
+                End With
+                
+                counter = 0
+            End If
+    
+            'Continually increment until finding Max Percent Increase
+            If Cells(j, 11).Value > MaxIncrease Then
+               MaxIncrease = Cells(j, 11)
+                 With Range("Q2")
+                    'continually overwrite cell as you find larger value
+                    .Value = MaxIncrease
+                    .Style = "Percent"
+                    .NumberFormat = "0.00%"
+                 End With
+               'output ticker string as well
+               Range("P2").Value = Cells(j, 9)
+            End If
+    
+            'Continually increment until finding Max Percent Decrease
+            If Cells(j, 11) < MaxDecrease Then
+               MaxDecrease = Cells(j, 11)
+                 With Range("Q3")
+                   'continually overwrite cell as you find smaller value
+                   .Value = MaxDecrease
+                   .Style = "Percent"
+                   .NumberFormat = "0.00%"
+                 End With
+               'output ticker string as well
+               Range("P3").Value = Cells(j, 9)
+            End If
+    
+            'conditional formatting background color
+            If Cells(j, 10) > 0 Then
+               Cells(j, 10).Interior.ColorIndex = 4
+            ElseIf Cells(j, 10) < 0 Then
+               Cells(j, 10).Interior.ColorIndex = 3
+            End If
+        
+            'total stock volume
+            Cells(j, 12) = Application.Sum(Range(Cells(Arr(j - 1), 7), Cells(i - 1, 7)))
+    
+            'Continually increment until finding Max Total Volume
+            If Cells(j, 12) > MaxTotVolume Then
+              MaxTotVolume = Cells(j, 12)
+              Range("Q4").Value = MaxTotVolume
+              Range("P4").Value = Cells(j, 9)
+            End If
+    
+        j = j + 1
+    
+        End If
+
+    Next
+
+'fill in first ticker value that the for loop missed
+Cells(2, 9) = Range("A2").Value
+
+'autofit the columns created
+Worksheets(num).Columns("A:Q").AutoFit
+
+Next
+
+
+End Sub
